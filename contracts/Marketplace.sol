@@ -5,25 +5,40 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./Token.sol";
 
+/**
+ * @title A contract to sell token and trade it
+ * @author Me
+ */
 contract Marketplace is Ownable, ReentrancyGuard {
+    /// Enum for holding states of the sale
     enum SaleState {
         SALE_INACTIVE,
         SALE_ONGOING,
         SALE_FINISHED
     }
 
+    /// Enum for holding states of the trade
     enum TradeState {
         TRADE_INACTIVE,
         TRADE_ONGOING,
         TRADE_FINISHED
     }
 
+    /// Enum for holding states of the account
     enum AccountState {
         ACCOUNT_INACTIVE,
         ACCOUNT_ACTIVE,
         ACCOUNT_BANNED
     }
 
+    /**
+     * @dev This struct holds information about the sale
+     * @param createdAt Creation time of sale
+     * @param allowedSellAmount Maximum allowed sell amount during the sale round
+     * @param totalSoldAmount Total sold amount during the sale round
+     * @param tokenPrice The price of each token on sale
+     * @param state see {SaleState}
+     */
     struct Sale {
         uint256 createdAt;
         uint256 allowedSellAmount;
@@ -32,55 +47,124 @@ contract Marketplace is Ownable, ReentrancyGuard {
         SaleState state;
     }
 
+    /**
+     * @dev This struct holds information about the trade
+     * @param createdAt Creation time of trade
+     * @param totalTradedAmount Total trade amount during the trade round
+     * @param state see {TradeState}
+     */
     struct Trade {
         uint256 createdAt;
         uint256 totalTradedAmount;
         TradeState state;
     }
 
+    /**
+     * @dev This struct holds information about the order
+     * @param amount The amount of tokens on the sale
+     * @param price The price of each token on the sale
+     * @param seller The address of the order creator
+     */
     struct Order {
         uint256 amount;
         uint256 price;
         address seller;
     }
 
+    /// Erc token
     Token private token;
 
+    /// Constant round length
     uint256 public constant roundLength = 3 days;
+    /// Current round
     uint256 public round = 1;
 
+    /// Open order list
     Order[] public orders;
 
+    /// A mapping for storing address and its state
     mapping(address => AccountState) private _accountState;
+    /// A mapping for storing Sale object for each round
     mapping(uint256 => Sale) private _roundSale;
+    /// A mapping for storing Trade object for each round
     mapping(uint256 => Trade) private _roundTrade;
+    /// A mapping for storing referrals of addresses
     mapping(address => address) private _addressReferal;
 
+    /**
+     * @dev Emitted when a sale created
+     * @param round The round of created sale
+     * @param tokenPrice The price of each token on the sale
+     * @param allowedSellAmount Maximum allowed sell amount during the sale round
+     */
     event SaleCreated(
         uint256 round,
         uint256 tokenPrice,
         uint256 allowedSellAmount
     );
-
+    /**
+     * @dev Emitted when a sale started
+     * @param round The round of started sale
+     */
     event SaleStarted(uint256 round);
+    /**
+     * @dev Emitted when a sale finished
+     * @param round The round of finished sale
+     */
     event SaleFinished(uint256 round);
+    /**
+     * @dev Emitted when an user buys from sale
+     * @param round The round of the sale bought from
+     * @param buyerAddress The address of the buyer
+     * @param amount The amount of tokens being bought
+     */
     event BoughtFromSale(
         uint256 round,
         address indexed buyerAddress,
         uint256 amount
     );
 
+    /**
+     * @dev Emitted when a trade created
+     * @param round The round of created trade
+     */
     event TradeCreated(uint256 round);
+    /**
+     * @dev Emitted when a trade started
+     * @param round The round of started trade
+     */
     event TradeStarted(uint256 round);
+    /**
+     * @dev Emitted when a trade finished
+     * @param round The round of finished trade
+     * @param tradeVolume The trade volume during token trade
+     */
     event TradeFinished(uint256 round, uint256 tradeVolume);
 
+    /**
+     * @dev Emitted when an order is created
+     * @param sellerAddress The creator of the order
+     * @param orderIndex The index of created order
+     * @param amount The amount of tokens being sold
+     * @param price The price of tokens being sold
+     */
     event OrderCreated(
         address indexed sellerAddress,
         uint256 orderIndex,
         uint256 amount,
         uint256 price
     );
+    /**
+     * @dev Emitted when an order is canceled
+     * @param orderIndex The index of canceled order
+     */
     event OrderCanceled(uint256 orderIndex);
+    /**
+     * @dev Emitted when an order is filled
+     * @param orderIndex The index of filled order
+     * @param amount The amount of tokens being sold
+     * @param orderClosed The status of the token if it's closed or not
+     */
     event OrderFilled(uint256 orderIndex, uint256 amount, bool orderClosed);
 
     constructor(address tokenAddress) {
@@ -98,10 +182,12 @@ contract Marketplace is Ownable, ReentrancyGuard {
 
     // ACCOUNT
 
+    /// @dev see {_register}
     function register() external {
         _register(address(0));
     }
 
+    /// @dev see {_register}
     function register(address referral) external {
         require(referral != address(0), "Referral address cannot be 0");
         require(
@@ -111,6 +197,10 @@ contract Marketplace is Ownable, ReentrancyGuard {
         _register(referral);
     }
 
+    /**
+     * @dev Registers an address with it's referral
+     * @param referral The referral to register with
+     */
     function _register(address referral) private {
         require(
             _accountState[_msgSender()] == AccountState.ACCOUNT_INACTIVE,
@@ -120,6 +210,10 @@ contract Marketplace is Ownable, ReentrancyGuard {
         _addressReferal[_msgSender()] = referral;
     }
 
+    /**
+     * @dev Bans an account
+     * @param addressToBan The address to ban
+     */
     function banAccount(address addressToBan) external onlyOwner {
         require(
             _accountState[addressToBan] == AccountState.ACCOUNT_ACTIVE,
@@ -130,6 +224,7 @@ contract Marketplace is Ownable, ReentrancyGuard {
 
     // SALE
 
+    /// @dev Creates a sale round
     function createSale() external onlyOwner {
         Sale storage prevSale = _roundSale[round];
         Trade storage prevTrade = _roundTrade[round];
@@ -156,6 +251,7 @@ contract Marketplace is Ownable, ReentrancyGuard {
         emit SaleCreated(round, sale.tokenPrice, sale.allowedSellAmount);
     }
 
+    /// @dev Starts a sale round
     function startSale() external onlyOwner {
         Sale storage sale = _roundSale[round];
         require(sale.state == SaleState.SALE_INACTIVE, "Sale must be inactive");
@@ -167,6 +263,7 @@ contract Marketplace is Ownable, ReentrancyGuard {
         emit SaleStarted(round);
     }
 
+    /// @dev Finishes a sale round
     function finishSale() external onlyOwner {
         Sale storage sale = _roundSale[round];
         require(sale.state == SaleState.SALE_ONGOING, "Sale is not ongoing");
@@ -184,6 +281,7 @@ contract Marketplace is Ownable, ReentrancyGuard {
         emit SaleFinished(round);
     }
 
+    /// @dev Burns unsold tokens from sale round
     function _burnExtraTokens() private {
         Sale storage sale = _roundSale[round];
         uint256 tokensToBurn = (sale.allowedSellAmount - sale.totalSoldAmount) /
@@ -192,6 +290,7 @@ contract Marketplace is Ownable, ReentrancyGuard {
         if (tokensToBurn > 0) token.burn(address(this), tokensToBurn);
     }
 
+    /// @dev Buys token from sale for the caller
     function buyFromSale() external payable nonReentrant {
         Sale storage sale = _roundSale[round];
         require(sale.state == SaleState.SALE_ONGOING, "Sale is not ongoing");
@@ -227,6 +326,7 @@ contract Marketplace is Ownable, ReentrancyGuard {
 
     // TRADE
 
+    /// @dev Creates a trade round
     function createTrade() external onlyOwner {
         Sale storage sale = _roundSale[round];
         Trade storage trade = _roundTrade[round];
@@ -243,6 +343,7 @@ contract Marketplace is Ownable, ReentrancyGuard {
         emit TradeCreated(round);
     }
 
+    /// @dev Starts a trade round
     function startTrade() external onlyOwner {
         Trade storage trade = _roundTrade[round];
         require(trade.createdAt != 0, "Trade round is not found");
@@ -255,6 +356,7 @@ contract Marketplace is Ownable, ReentrancyGuard {
         emit TradeStarted(round);
     }
 
+    /// @dev Finishes a trade round
     function finishTrade() external onlyOwner nonReentrant {
         Trade storage trade = _roundTrade[round];
         require(
@@ -274,6 +376,11 @@ contract Marketplace is Ownable, ReentrancyGuard {
 
     // ORDER
 
+    /**
+     * @dev Creates an order
+     * @param amount The amount of tokens to sell
+     * @param price The price of tokens for trading
+     */
     function createOrder(uint256 amount, uint256 price) external nonReentrant {
         require(
             amount <= token.balanceOf(_msgSender()),
@@ -293,6 +400,10 @@ contract Marketplace is Ownable, ReentrancyGuard {
         emit OrderCreated(_msgSender(), orders.length - 1, amount, price);
     }
 
+    /**
+     * @dev Cancels an order
+     * @param orderIndex The index of order to cancel
+     */
     function cancelOrder(uint256 orderIndex) external nonReentrant {
         Order storage order = orders[orderIndex];
         require(order.seller == _msgSender(), "You are not the order creator");
@@ -304,6 +415,11 @@ contract Marketplace is Ownable, ReentrancyGuard {
         emit OrderCanceled(orderIndex);
     }
 
+    /**
+     * @dev Fills an order
+     * @param orderIndex The index of order to fill
+     * @param tokenAmountToBuy The amount of tokens to buy for caller
+     */
     function fillOrder(uint256 orderIndex, uint256 tokenAmountToBuy)
         external
         payable
@@ -362,6 +478,7 @@ contract Marketplace is Ownable, ReentrancyGuard {
 
     // GETTER
 
+    /// @dev see {Sale}
     function getSaleDetail(uint256 saleRound)
         external
         view
@@ -384,6 +501,7 @@ contract Marketplace is Ownable, ReentrancyGuard {
         );
     }
 
+    /// @dev see {Trade}
     function getTradeDetail(uint256 saleRound)
         external
         view
@@ -398,6 +516,7 @@ contract Marketplace is Ownable, ReentrancyGuard {
         return (trade.createdAt, trade.totalTradedAmount, trade.state);
     }
 
+    /// @dev see {_accountState}
     function getAccountState(address account)
         external
         view
@@ -406,6 +525,7 @@ contract Marketplace is Ownable, ReentrancyGuard {
         return _accountState[account];
     }
 
+    /// @dev see {Order}
     function getOrderDetail(uint256 orderIndex)
         external
         view
