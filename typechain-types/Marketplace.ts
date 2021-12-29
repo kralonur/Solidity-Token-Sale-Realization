@@ -22,7 +22,6 @@ export interface MarketplaceInterface extends utils.Interface {
   functions: {
     "banAccount(address)": FunctionFragment;
     "buyFromSale()": FunctionFragment;
-    "c_0x44960ed2(bytes32)": FunctionFragment;
     "cancelOrder(uint256)": FunctionFragment;
     "createOrder(uint256,uint256)": FunctionFragment;
     "createSale()": FunctionFragment;
@@ -49,10 +48,6 @@ export interface MarketplaceInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "buyFromSale",
     values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "c_0x44960ed2",
-    values: [BytesLike]
   ): string;
   encodeFunctionData(
     functionFragment: "cancelOrder",
@@ -126,10 +121,6 @@ export interface MarketplaceInterface extends utils.Interface {
   decodeFunctionResult(functionFragment: "banAccount", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "buyFromSale",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "c_0x44960ed2",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -320,11 +311,6 @@ export interface Marketplace extends BaseContract {
       overrides?: PayableOverrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
-    c_0x44960ed2(
-      c__0x44960ed2: BytesLike,
-      overrides?: CallOverrides
-    ): Promise<[void]>;
-
     cancelOrder(
       orderIndex: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
@@ -451,11 +437,6 @@ export interface Marketplace extends BaseContract {
     overrides?: PayableOverrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
-  c_0x44960ed2(
-    c__0x44960ed2: BytesLike,
-    overrides?: CallOverrides
-  ): Promise<void>;
-
   cancelOrder(
     orderIndex: BigNumberish,
     overrides?: Overrides & { from?: string | Promise<string> }
@@ -573,11 +554,6 @@ export interface Marketplace extends BaseContract {
     banAccount(addressToBan: string, overrides?: CallOverrides): Promise<void>;
 
     buyFromSale(overrides?: CallOverrides): Promise<void>;
-
-    c_0x44960ed2(
-      c__0x44960ed2: BytesLike,
-      overrides?: CallOverrides
-    ): Promise<void>;
 
     cancelOrder(
       orderIndex: BigNumberish,
@@ -768,11 +744,6 @@ export interface Marketplace extends BaseContract {
       overrides?: PayableOverrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
-    c_0x44960ed2(
-      c__0x44960ed2: BytesLike,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
     cancelOrder(
       orderIndex: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
@@ -869,11 +840,6 @@ export interface Marketplace extends BaseContract {
 
     buyFromSale(
       overrides?: PayableOverrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
-
-    c_0x44960ed2(
-      c__0x44960ed2: BytesLike,
-      overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
     cancelOrder(
