@@ -1,46 +1,31 @@
-# Advanced Sample Hardhat Project
+# Solidity Token Sale Realization
 
-This project demonstrates an advanced Hardhat use case, integrating other tools commonly used alongside Hardhat in the ecosystem.
+This contract provides platform for selling and trading erc token.
 
-The project comes with a sample contract, a test for that contract, a sample script that deploys that contract, and an example of a task implementation, which simply lists the available accounts. It also comes with a variety of other tools, preconfigured to work with the project code.
+Notes:
 
-Try running some of the following tasks:
+During development some choices made by purpose, like:
+Instead of Ownable , AccessControl could be used , but this contract focuses on Marketplace, and for marketplace Ownable was enough.
 
-```shell
-npx hardhat accounts
-npx hardhat compile
-npx hardhat clean
-npx hardhat test
-npx hardhat node
-npx hardhat help
-REPORT_GAS=true npx hardhat test
-npx hardhat coverage
-npx hardhat run scripts/deploy.ts
-TS_NODE_FILES=true npx ts-node scripts/deploy.ts
-npx eslint '**/*.{js,ts}'
-npx eslint '**/*.{js,ts}' --fix
-npx prettier '**/*.{json,sol,md}' --check
-npx prettier '**/*.{json,sol,md}' --write
-npx solhint 'contracts/**/*.sol'
-npx solhint 'contracts/**/*.sol' --fix
-```
+Some functions on the contract could be divided into smaller functions if necessary.
 
-# Etherscan verification
+Logic of the contract could be changed if necessary (like): instead of creating trade round after sale rounds ends, it can be created and started after sale rounds end etc etc. 
+## Development
 
-To try out Etherscan verification, you first need to deploy a contract to an Ethereum network that's supported by Etherscan, such as Ropsten.
+The contract is written with solidity.
 
-In this project, copy the .env.example file to a file named .env, and then edit it to fill in the details. Enter your Etherscan API key, your Ropsten node URL (eg from Alchemy), and the private key of the account which will send the deployment transaction. With a valid .env file in place, first deploy your contract:
+Hardhat development environment being used to write this contract.
 
-```shell
-hardhat run --network ropsten scripts/sample-script.ts
-```
+The test coverage is %100 (result from solidity-coverage).
 
-Then, copy the deployment address and paste it in to replace `DEPLOYED_CONTRACT_ADDRESS` in this command:
+The contract size is checked and it's under limits.
 
-```shell
-npx hardhat verify --network ropsten DEPLOYED_CONTRACT_ADDRESS "Hello, Hardhat!"
-```
+For linting solhint and prettier is being used.
 
-# Performance optimizations
+Contract could be deployed to rinkeby testnet using infura api key and wallet private key.
+Environment file has to be created to use test network and contract validation. (.env.example file contains example template)
 
-For faster runs of your tests and scripts, consider skipping ts-node's type checking by setting the environment variable `TS_NODE_TRANSPILE_ONLY` to `1` in hardhat's environment. For more details see [the documentation](https://hardhat.org/guides/typescript.html#performance-optimizations).
+Scripts folder contains the script for contract deployment.
+
+For the easier contract interaction, hardhat tasks are created.
+To see the list of tasks, write `npx hardhat` to the terminal.
