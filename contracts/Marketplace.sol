@@ -56,6 +56,33 @@ contract Marketplace is Ownable, ReentrancyGuard {
     mapping(uint256 => Trade) private _roundTrade;
     mapping(address => address) private _addressReferal;
 
+    event SaleCreated(
+        uint256 round,
+        uint256 tokenPrice,
+        uint256 allowedSellAmount
+    );
+
+    event SaleStarted(uint256 round);
+    event SaleFinished(uint256 round);
+    event BoughtFromSale(
+        uint256 round,
+        address indexed buyerAddress,
+        uint256 amount
+    );
+
+    event TradeCreated(uint256 round);
+    event TradeStarted(uint256 round);
+    event TradeFinished(uint256 round, uint256 tradeVolume);
+
+    event OrderCreated(
+        address indexed sellerAddress,
+        uint256 orderIndex,
+        uint256 amount,
+        uint256 price
+    );
+    event OrderCanceled(uint256 orderIndex);
+    event OrderFilled(uint256 orderIndex, uint256 amount, bool orderClosed);
+
     constructor(address tokenAddress) {
         token = Token(tokenAddress);
 
@@ -65,6 +92,8 @@ contract Marketplace is Ownable, ReentrancyGuard {
         sale.allowedSellAmount = 1 ether;
         sale.tokenPrice = 0.00001 ether;
         sale.state = SaleState.SALE_INACTIVE;
+
+        emit SaleCreated(round, sale.tokenPrice, sale.allowedSellAmount);
     }
 
     // ACCOUNT
@@ -123,6 +152,8 @@ contract Marketplace is Ownable, ReentrancyGuard {
             10000 +
             0.000004 ether;
         sale.state = SaleState.SALE_INACTIVE;
+
+        emit SaleCreated(round, sale.tokenPrice, sale.allowedSellAmount);
     }
 
     function startSale() external onlyOwner {
@@ -132,6 +163,8 @@ contract Marketplace is Ownable, ReentrancyGuard {
 
         uint256 tokenToMint = sale.allowedSellAmount / sale.tokenPrice;
         token.mint(address(this), tokenToMint);
+
+        emit SaleStarted(round);
     }
 
     function finishSale() external onlyOwner {
@@ -148,6 +181,7 @@ contract Marketplace is Ownable, ReentrancyGuard {
         sale.state = SaleState.SALE_FINISHED;
 
         _burnExtraTokens();
+        emit SaleFinished(round);
     }
 
     function _burnExtraTokens() private {
@@ -187,6 +221,8 @@ contract Marketplace is Ownable, ReentrancyGuard {
         sale.totalSoldAmount += amountLeftForPlatform;
 
         token.transfer(_msgSender(), tokens);
+
+        emit BoughtFromSale(round, _msgSender(), tokens);
     }
 
     // TRADE
@@ -203,6 +239,8 @@ contract Marketplace is Ownable, ReentrancyGuard {
 
         trade.createdAt = block.timestamp;
         trade.state = TradeState.TRADE_INACTIVE;
+
+        emit TradeCreated(round);
     }
 
     function startTrade() external onlyOwner {
@@ -213,6 +251,8 @@ contract Marketplace is Ownable, ReentrancyGuard {
             "Trade round must be inactive"
         );
         trade.state = TradeState.TRADE_ONGOING;
+
+        emit TradeStarted(round);
     }
 
     function finishTrade() external onlyOwner nonReentrant {
@@ -228,6 +268,8 @@ contract Marketplace is Ownable, ReentrancyGuard {
         delete orders;
 
         trade.state = TradeState.TRADE_FINISHED;
+
+        emit TradeFinished(round, trade.totalTradedAmount);
     }
 
     // ORDER
@@ -247,6 +289,8 @@ contract Marketplace is Ownable, ReentrancyGuard {
         token.transferFrom(_msgSender(), address(this), amount);
 
         orders.push(order);
+
+        emit OrderCreated(_msgSender(), orders.length - 1, amount, price);
     }
 
     function cancelOrder(uint256 orderIndex) external nonReentrant {
@@ -256,6 +300,8 @@ contract Marketplace is Ownable, ReentrancyGuard {
         token.transfer(_msgSender(), order.amount);
 
         delete (orders[orderIndex]);
+
+        emit OrderCanceled(orderIndex);
     }
 
     function fillOrder(uint256 orderIndex, uint256 tokenAmountToBuy)
@@ -310,6 +356,8 @@ contract Marketplace is Ownable, ReentrancyGuard {
         if (order.amount == 0) delete (orders[orderIndex]);
 
         trade.totalTradedAmount += msg.value;
+
+        emit OrderFilled(orderIndex, tokenAmountToBuy, order.amount == 0);
     }
 
     // GETTER

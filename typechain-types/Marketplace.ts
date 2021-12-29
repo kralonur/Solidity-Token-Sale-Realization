@@ -178,11 +178,64 @@ export interface MarketplaceInterface extends utils.Interface {
   ): Result;
 
   events: {
+    "BoughtFromSale(uint256,address,uint256)": EventFragment;
+    "OrderCanceled(uint256)": EventFragment;
+    "OrderCreated(address,uint256,uint256,uint256)": EventFragment;
+    "OrderFilled(uint256,uint256,bool)": EventFragment;
     "OwnershipTransferred(address,address)": EventFragment;
+    "SaleCreated(uint256,uint256,uint256)": EventFragment;
+    "SaleFinished(uint256)": EventFragment;
+    "SaleStarted(uint256)": EventFragment;
+    "TradeCreated(uint256)": EventFragment;
+    "TradeFinished(uint256,uint256)": EventFragment;
+    "TradeStarted(uint256)": EventFragment;
   };
 
+  getEvent(nameOrSignatureOrTopic: "BoughtFromSale"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "OrderCanceled"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "OrderCreated"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "OrderFilled"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "SaleCreated"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "SaleFinished"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "SaleStarted"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "TradeCreated"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "TradeFinished"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "TradeStarted"): EventFragment;
 }
+
+export type BoughtFromSaleEvent = TypedEvent<
+  [BigNumber, string, BigNumber],
+  { round: BigNumber; buyerAddress: string; amount: BigNumber }
+>;
+
+export type BoughtFromSaleEventFilter = TypedEventFilter<BoughtFromSaleEvent>;
+
+export type OrderCanceledEvent = TypedEvent<
+  [BigNumber],
+  { orderIndex: BigNumber }
+>;
+
+export type OrderCanceledEventFilter = TypedEventFilter<OrderCanceledEvent>;
+
+export type OrderCreatedEvent = TypedEvent<
+  [string, BigNumber, BigNumber, BigNumber],
+  {
+    sellerAddress: string;
+    orderIndex: BigNumber;
+    amount: BigNumber;
+    price: BigNumber;
+  }
+>;
+
+export type OrderCreatedEventFilter = TypedEventFilter<OrderCreatedEvent>;
+
+export type OrderFilledEvent = TypedEvent<
+  [BigNumber, BigNumber, boolean],
+  { orderIndex: BigNumber; amount: BigNumber; orderClosed: boolean }
+>;
+
+export type OrderFilledEventFilter = TypedEventFilter<OrderFilledEvent>;
 
 export type OwnershipTransferredEvent = TypedEvent<
   [string, string],
@@ -191,6 +244,36 @@ export type OwnershipTransferredEvent = TypedEvent<
 
 export type OwnershipTransferredEventFilter =
   TypedEventFilter<OwnershipTransferredEvent>;
+
+export type SaleCreatedEvent = TypedEvent<
+  [BigNumber, BigNumber, BigNumber],
+  { round: BigNumber; tokenPrice: BigNumber; allowedSellAmount: BigNumber }
+>;
+
+export type SaleCreatedEventFilter = TypedEventFilter<SaleCreatedEvent>;
+
+export type SaleFinishedEvent = TypedEvent<[BigNumber], { round: BigNumber }>;
+
+export type SaleFinishedEventFilter = TypedEventFilter<SaleFinishedEvent>;
+
+export type SaleStartedEvent = TypedEvent<[BigNumber], { round: BigNumber }>;
+
+export type SaleStartedEventFilter = TypedEventFilter<SaleStartedEvent>;
+
+export type TradeCreatedEvent = TypedEvent<[BigNumber], { round: BigNumber }>;
+
+export type TradeCreatedEventFilter = TypedEventFilter<TradeCreatedEvent>;
+
+export type TradeFinishedEvent = TypedEvent<
+  [BigNumber, BigNumber],
+  { round: BigNumber; tradeVolume: BigNumber }
+>;
+
+export type TradeFinishedEventFilter = TypedEventFilter<TradeFinishedEvent>;
+
+export type TradeStartedEvent = TypedEvent<[BigNumber], { round: BigNumber }>;
+
+export type TradeStartedEventFilter = TypedEventFilter<TradeStartedEvent>;
 
 export interface Marketplace extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
@@ -574,6 +657,44 @@ export interface Marketplace extends BaseContract {
   };
 
   filters: {
+    "BoughtFromSale(uint256,address,uint256)"(
+      round?: null,
+      buyerAddress?: string | null,
+      amount?: null
+    ): BoughtFromSaleEventFilter;
+    BoughtFromSale(
+      round?: null,
+      buyerAddress?: string | null,
+      amount?: null
+    ): BoughtFromSaleEventFilter;
+
+    "OrderCanceled(uint256)"(orderIndex?: null): OrderCanceledEventFilter;
+    OrderCanceled(orderIndex?: null): OrderCanceledEventFilter;
+
+    "OrderCreated(address,uint256,uint256,uint256)"(
+      sellerAddress?: string | null,
+      orderIndex?: null,
+      amount?: null,
+      price?: null
+    ): OrderCreatedEventFilter;
+    OrderCreated(
+      sellerAddress?: string | null,
+      orderIndex?: null,
+      amount?: null,
+      price?: null
+    ): OrderCreatedEventFilter;
+
+    "OrderFilled(uint256,uint256,bool)"(
+      orderIndex?: null,
+      amount?: null,
+      orderClosed?: null
+    ): OrderFilledEventFilter;
+    OrderFilled(
+      orderIndex?: null,
+      amount?: null,
+      orderClosed?: null
+    ): OrderFilledEventFilter;
+
     "OwnershipTransferred(address,address)"(
       previousOwner?: string | null,
       newOwner?: string | null
@@ -582,6 +703,35 @@ export interface Marketplace extends BaseContract {
       previousOwner?: string | null,
       newOwner?: string | null
     ): OwnershipTransferredEventFilter;
+
+    "SaleCreated(uint256,uint256,uint256)"(
+      round?: null,
+      tokenPrice?: null,
+      allowedSellAmount?: null
+    ): SaleCreatedEventFilter;
+    SaleCreated(
+      round?: null,
+      tokenPrice?: null,
+      allowedSellAmount?: null
+    ): SaleCreatedEventFilter;
+
+    "SaleFinished(uint256)"(round?: null): SaleFinishedEventFilter;
+    SaleFinished(round?: null): SaleFinishedEventFilter;
+
+    "SaleStarted(uint256)"(round?: null): SaleStartedEventFilter;
+    SaleStarted(round?: null): SaleStartedEventFilter;
+
+    "TradeCreated(uint256)"(round?: null): TradeCreatedEventFilter;
+    TradeCreated(round?: null): TradeCreatedEventFilter;
+
+    "TradeFinished(uint256,uint256)"(
+      round?: null,
+      tradeVolume?: null
+    ): TradeFinishedEventFilter;
+    TradeFinished(round?: null, tradeVolume?: null): TradeFinishedEventFilter;
+
+    "TradeStarted(uint256)"(round?: null): TradeStartedEventFilter;
+    TradeStarted(round?: null): TradeStartedEventFilter;
   };
 
   estimateGas: {
